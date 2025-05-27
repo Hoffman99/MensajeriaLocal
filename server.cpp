@@ -44,28 +44,48 @@ int main() {
     cout << "Servidor escuchando en el puerto " << PUERTO << endl;
 
     while (true) {
-       
-        sockaddr_in cliente_dir;
-        socklen_t cliente_len = sizeof(cliente_dir);
-        int socket_cliente = accept(socket_servidor, (sockaddr*)&cliente_dir, &cliente_len);
+           while (true) {
+        fd_set lectura_fds;
+        FD_ZERO(&lectura_fds);
+        FD_SET(socket_servidor, &lectura_fds);
+        int max_fd = socket_servidor;
 
-        if (socket_cliente >= 0) {
-         
-            bool agregado = false;
-            for (int i = 0; i < MAX_CLIENTES; i++) {
-                if (clientes[i].socket_fd == -1) {
-                    clientes[i].socket_fd = socket_cliente;
-                    cout << "Cliente conectado en la posición " << i << endl;
-                    agregado = true;
-                    break;
-                }
-            }
-            if (!agregado) {
-                cout << "Demasiados clientes conectados. Cerrando nueva conexión.\n";
-                close(socket_cliente);
+        for (int i = 0; i < MAX_CLIENTES; i++) {
+            if (clientes[i].socket_fd != -1) {
+                FD_SET(clientes[i].socket_fd, &lectura_fds);
+                if (clientes[i].socket_fd > max_fd)
+                    max_fd = clientes[i].socket_fd;
             }
         }
 
+        timeval timeout = {0, 50000}; 
+        int actividad = select(max_fd + 1, &lectura_fds, NULL, NULL, &timeout);
+
+        if (actividad < 0) {
+            perror("Error en select");
+            break;
+        }
+
+        if (FD_ISSET(socket_servidor, &lectura_fds)) {
+            sockaddr_in cliente_dir;
+            socklen_t cliente_len = sizeof(cliente_dir);
+            int socket_cliente = accept(socket_servidor, (sockaddr*)&cliente_dir, &cliente_len);
+            if (socket_cliente >= 0) {
+                bool agregado = false;
+                for (int i = 0; i < MAX_CLIENTES; i++) {
+                    if (clientes[i].socket_fd == -1) {
+                        clientes[i].socket_fd = socket_cliente;
+                        cout << "Cliente conectado en la posición " << i << endl;
+                        agregado = true;
+                        break;
+                    }
+                }
+                if (!agregado) {
+                    cout << "Demasiados clientes conectados. Cerrando nueva conexión.\n";
+                    close(socket_cliente);
+                }
+            }
+        }
     
         for (int i = 0; i < MAX_CLIENTES; i++) {
             if (clientes[i].socket_fd != -1) {
