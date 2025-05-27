@@ -69,8 +69,10 @@ int main() {
     
         for (int i = 0; i < MAX_CLIENTES; i++) {
             if (clientes[i].socket_fd != -1) {
-                ssize_t bytes = recv(clientes[i].socket_fd, clientes[i].mensaje, TAM, MSG_DONTWAIT);
+                char buffer[TAM];
+                ssize_t bytes = recv(clientes[i].socket_fd, buffer, TAM, MSG_PEEK);
                 if (bytes > 0) {
+                    bytes = recv(clientes[i].socket_fd, clientes[i].mensaje, TAM, 0);
                     cout << "Cliente " << i << " dice: " << clientes[i].mensaje << endl;
                     send(clientes[i].socket_fd, clientes[i].mensaje, strlen(clientes[i].mensaje), 0);
                     memset(clientes[i].mensaje, 0, TAM);
