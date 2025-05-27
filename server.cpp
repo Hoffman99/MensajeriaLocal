@@ -3,12 +3,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 using namespace std;
 
 #define PUERTO 25565
 #define TAM 256
-#define MAX_CLIENTES 3
+#define MAX_CLIENTES 10
 
 struct Cliente {
     int socket_fd = -1;
@@ -44,7 +45,6 @@ int main() {
     cout << "Servidor escuchando en el puerto " << PUERTO << endl;
 
     while (true) {
-           while (true) {
         fd_set lectura_fds;
         FD_ZERO(&lectura_fds);
         FD_SET(socket_servidor, &lectura_fds);
@@ -86,26 +86,21 @@ int main() {
                 }
             }
         }
-    
+
         for (int i = 0; i < MAX_CLIENTES; i++) {
-            if (clientes[i].socket_fd != -1) {
-                char buffer[TAM];
-                ssize_t bytes = recv(clientes[i].socket_fd, buffer, TAM, MSG_PEEK);
+            if (clientes[i].socket_fd != -1 && FD_ISSET(clientes[i].socket_fd, &lectura_fds)) {
+                ssize_t bytes = recv(clientes[i].socket_fd, clientes[i].mensaje, TAM, 0);
                 if (bytes > 0) {
-                    bytes = recv(clientes[i].socket_fd, clientes[i].mensaje, TAM, 0);
                     cout << "Cliente " << i << " dice: " << clientes[i].mensaje << endl;
                     send(clientes[i].socket_fd, clientes[i].mensaje, strlen(clientes[i].mensaje), 0);
                     memset(clientes[i].mensaje, 0, TAM);
-                } else if (bytes == 0) {
-             
+                } else if (bytes == 0 || bytes < 0) {
                     cout << "Cliente " << i << " desconectado.\n";
                     close(clientes[i].socket_fd);
                     clientes[i].socket_fd = -1;
                 }
             }
         }
-
-        usleep(50000);
     }
 
     close(socket_servidor);
