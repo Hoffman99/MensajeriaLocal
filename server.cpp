@@ -8,7 +8,7 @@
 using namespace std;
 
 #define PUERTO 25565
-#define TAM 256
+#define TAM 1024
 #define MAX_CLIENTES 10
 
 struct Cliente {
@@ -18,6 +18,8 @@ struct Cliente {
     char contraseña[50] = {0};
     bool autenticado = false;
 };
+
+
 
 int main() {
     Cliente clientes[MAX_CLIENTES];  
@@ -92,7 +94,14 @@ int main() {
                 ssize_t bytes = recv(clientes[i].socket_fd, clientes[i].mensaje, TAM, 0);
                 if (bytes > 0) {
                     cout << "Cliente " << i << " dice: " << clientes[i].mensaje << endl;
-                    send(clientes[i].socket_fd, clientes[i].mensaje, strlen(clientes[i].mensaje), 0);
+                    for (int j = 0; j < MAX_CLIENTES; j++)
+                    {
+                        if (clientes[j].socket_fd!=clientes[i].socket_fd && clientes[j].socket_fd!= -1)
+                        {
+                            send(clientes[j].socket_fd, clientes[i].mensaje, strlen(clientes[i].mensaje), 0);
+                        }
+                        
+                    }
                     memset(clientes[i].mensaje, 0, TAM);
                 } else if (bytes == 0 || bytes < 0) {
                     cout << "Cliente " << i << " desconectado.\n";
