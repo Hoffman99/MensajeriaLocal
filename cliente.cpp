@@ -7,7 +7,7 @@
 using namespace std;
 
 #define PUERTO 25565
-#define TAM 256
+#define TAM 1024
 
 int main() {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
