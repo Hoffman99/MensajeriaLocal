@@ -47,10 +47,7 @@ int main() {
         if (actividad < 0) {
             perror("Error en select");
             break;
-        } else if (actividad == 0) {
-            cout << "\nTiempo para escribir expirado. Revisando mensajes...\n";
-            continue;
-        }
+        } 
 
         if (FD_ISSET(sock, &readfds)) {
             ssize_t bytes = recv(sock, respuesta, TAM - 1, 0);
