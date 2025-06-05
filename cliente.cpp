@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 using namespace std;
 
@@ -30,22 +31,50 @@ int main() {
     char respuesta[TAM];
 
     while (true) {
-        ssize_t bytes = recv(sock, respuesta, TAM, 0);
-        if (bytes > 0) {
-            cout << "Servidor respondió: " << respuesta << endl;
-        } else if (bytes == 0) {
-            cout << "Servidor desconectado.\n";
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(sock, &readfds);
+        FD_SET(STDIN_FILENO, &readfds); 
+
+        int max_fd = sock > STDIN_FILENO ? sock : STDIN_FILENO;
+
+        timeval tv;
+        tv.tv_sec = 10;
+        tv.tv_usec = 0;
+
+        int actividad = select(max_fd + 1, &readfds, NULL, NULL, &tv);
+
+        if (actividad < 0) {
+            perror("Error en select");
             break;
-        } else {
-            perror("Error al recibir datos");
-
+        } else if (actividad == 0) {
+            cout << "\nTiempo para escribir expirado. Revisando mensajes...\n";
+            continue;
         }
-        cout << "Escribe un mensaje: ";
-        cin.getline(mensaje, TAM);
 
-        send(sock, mensaje, strlen(mensaje), 0);
+        if (FD_ISSET(sock, &readfds)) {
+            ssize_t bytes = recv(sock, respuesta, TAM - 1, 0);
+            if (bytes > 0) {
+                respuesta[bytes] = '\0';
+                cout << "\nMensaje recibido: " << respuesta <<"\n";
+            } else if (bytes == 0) {
+                cout << "Servidor desconectado.\n";
+                break;
+            } else {
+                perror("Error al recibir datos");
+                break;
+            }
+        }
 
-        memset(respuesta, 0, TAM);
+        if (FD_ISSET(STDIN_FILENO, &readfds)) {
+            if (fgets(mensaje, TAM, stdin) != NULL) {
+                size_t len = strlen(mensaje);
+                if (len > 0 && mensaje[len-1] == '\n') {
+                    mensaje[len-1] = '\0';
+                }
+                send(sock, mensaje, strlen(mensaje), 0);
+            }
+        }
     }
 
     close(sock);
