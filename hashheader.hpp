@@ -32,5 +32,7 @@ public:
     void Registrar(const string& usuario, const string& clave) ;
     //iniciar sesion
     bool iniciarsesion(const string& usuario,const Clave& clave);
+    //crear usuarios 
+    void crearuser();
     
 };
