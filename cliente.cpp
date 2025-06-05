@@ -30,6 +30,38 @@ int main() {
     char mensaje[TAM];
     char respuesta[TAM];
 
+    // --- Autenticación inicial ---
+    // Recibe "Usuario: "
+    ssize_t bytes = recv(sock, respuesta, TAM - 1, 0);
+    if (bytes > 0) {
+        respuesta[bytes] = '\0';
+        cout << respuesta;
+        // Envía usuario
+        cin.getline(mensaje, TAM);
+        send(sock, mensaje, strlen(mensaje), 0);
+    }
+
+    // Recibe "password "
+    bytes = recv(sock, respuesta, TAM - 1, 0);
+    if (bytes > 0) {
+        respuesta[bytes] = '\0';
+        cout << respuesta;
+        // Envía contraseña
+        cin.getline(mensaje, TAM);
+        send(sock, mensaje, strlen(mensaje), 0);
+    }
+
+    // Recibe mensaje de bienvenida o error
+    bytes = recv(sock, respuesta, TAM - 1, 0);
+    if (bytes > 0) {
+        respuesta[bytes] = '\0';
+        cout << respuesta << endl;
+        if (strstr(respuesta, "incorrectos") != nullptr) {
+            close(sock);
+            return 0;
+        }
+    }
+
     while (true) {
         fd_set readfds;
         FD_ZERO(&readfds);
