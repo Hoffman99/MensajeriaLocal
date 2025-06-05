@@ -59,16 +59,5 @@ bool TablaHash::iniciarsesion(const string& usuario, const Clave& clave) {
     return false;
 }
 
-void TablaHash::crearuser() {
-Registrar("usuario1", "1234");
-Registrar("usuario2", "abcd");
-Registrar("usuario3", "qwerty");
-Registrar("usuario4", "asdfgh");
-Registrar("usuario5", "zxcvbn");
-Registrar("usuario6", "qazwsx");
-Registrar("usuario7", "123456");
-Registrar("usuario8", "password");
-Registrar("usuario9", "letmein");
-Registrar("usuario10", "iloveyou");
-}
+
 
