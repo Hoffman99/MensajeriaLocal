@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include "Hashheader.hpp"
 
 using namespace std;
 
@@ -11,17 +12,32 @@ using namespace std;
 #define TAM 1024
 #define MAX_CLIENTES 10
 
+
 struct Cliente {
     int socket_fd = -1;
     char mensaje[TAM] = {0};
-    char usuario[50] = {0};
-    char contraseña[50] = {0};
+    char user[50] = {0};
+    char password[50] = {0};
     bool autenticado = false;
 };
 
 
 
+
 int main() {
+   //inicializar la tabla hash
+    TablaHash tabla;
+    tabla.Registrar("usuario1", "1234");
+    tabla.Registrar("usuario2", "abcd");
+    tabla.Registrar("usuario3", "qwerty");
+    tabla.Registrar("usuario4", "asdfgh");
+    tabla.Registrar("usuario5", "zxcvbn");
+    tabla.Registrar("usuario6", "qazwsx");
+    tabla.Registrar("usuario7", "123456");
+    tabla.Registrar("usuario8", "password");
+    tabla.Registrar("usuario9", "letmein");
+    tabla.Registrar("usuario10", "iloveyou");
+    //inicializar los clientes
     Cliente clientes[MAX_CLIENTES];  
     int socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_servidor < 0) {
@@ -74,15 +90,34 @@ int main() {
             int socket_cliente = accept(socket_servidor, (sockaddr*)&cliente_dir, &cliente_len);
             if (socket_cliente >= 0) {
                 bool agregado = false;
+                ssize_t bytes; // Declarar una sola vez aquí
                 for (int i = 0; i < MAX_CLIENTES; i++) {
                     if (clientes[i].socket_fd == -1) {
                         clientes[i].socket_fd = socket_cliente;
                         cout << "Cliente conectado en la posición " << i << endl;
-                        const char* bienvenida = "¡Bienvenido al servidor!";
-                        send(clientes[i].socket_fd, bienvenida, strlen(bienvenida), 0);
-                        agregado = true;
-                        break;
-                    }
+
+                        const char* usu = "Usuario: ";
+                        send(clientes[i].socket_fd, usu, strlen(usu), 0);
+                        bytes = recv(clientes[i].socket_fd, clientes[i].user, TAM, 0);
+                        const char* contr = "password ";
+                        send(clientes[i].socket_fd, contr, strlen(contr), 0);
+                        bytes = recv(clientes[i].socket_fd, clientes[i].password, TAM, 0);
+
+                        if (tabla.iniciarsesion(clientes[i].user, clientes[i].password)) {
+                            const char* bienvenida = "¡Bienvenido al servidor!";
+                            send(clientes[i].socket_fd, bienvenida, strlen(bienvenida), 0);
+                            agregado = true;
+                            break;
+                        } else {
+                            const char* error = "Usuario o contraseña incorrectos. Conexión cerrada.";
+                            send(clientes[i].socket_fd, error, strlen(error), 0);
+                            close(clientes[i].socket_fd);
+                            clientes[i].socket_fd = -1; // Marcar como desconectado
+                            cout << "Cliente " << i << " no autenticado. Conexión cerrada.\n";
+                            agregado = true; // Para evitar que pase al if (!agregado)
+                            break;
+                        }
+                    }   
                 }
                 if (!agregado) {
                     cout << "Demasiados clientes conectados. Cerrando nueva conexión.\n";
