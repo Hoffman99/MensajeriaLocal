@@ -28,7 +28,16 @@ int main() {
    //inicializar la tabla hash
     TablaHash tabla;
     //crear todos los usuarios 
-     tabla.crearuser();
+  tabla.Registrar("usuario1", "1234");
+  tabla.Registrar("usuario2", "abcd");
+  tabla.Registrar("usuario3", "qwerty");
+  tabla.Registrar("usuario4", "asdfgh");
+  tabla.Registrar("usuario5", "zxcvbn");
+  tabla.Registrar("usuario6", "qazwsx");
+  tabla.Registrar("usuario7", "123456");
+  tabla.Registrar("usuario8", "password");
+  tabla.Registrar("usuario9", "letmein");
+  tabla.Registrar("usuario10", "iloveyou");
     //inicializar los clientes
     Cliente clientes[MAX_CLIENTES];  
     int socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
