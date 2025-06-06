@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include "hashheader.hpp"
+#include <fstream>
 
 using namespace std;
 
@@ -14,16 +15,7 @@ using namespace std;
 #define TAM 1024
 #define MAX_CLIENTES 10
 
-void escribir_logs(const string& mensaje) {
-    ofstream logs("logs.txt", ios::app);
-    if (logs.is_open()) {
-        time_t hora = time(0);
-        char* fecha = ctime(&hora);
-        if (fecha && fecha[24] == '\n') fecha[24] = '\0';
-        logs << "[" << fecha << "] " << mensaje << endl;
-        logs.close();
-    }
-}
+void escribir_logs(const string& mensaje);
 
 void registrarUsuarios(TablaHash& tabla);
 

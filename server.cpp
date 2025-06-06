@@ -1,5 +1,16 @@
 #include "server.hpp"
 
+void escribir_logs(const string& mensaje) {
+    ofstream logs("logs.txt", ios::app);
+    if (logs.is_open()) {
+        time_t hora = time(0);
+        char* fecha = ctime(&hora);
+        if (fecha && fecha[24] == '\n') fecha[24] = '\0';
+        logs << "[" << fecha << "] " << mensaje << endl;
+        logs.close();
+    }
+}
+
 void registrarUsuarios(TablaHash& tabla){
     tabla.Registrar("usuario1", "1234");
     tabla.Registrar("usuario2", "abcd");

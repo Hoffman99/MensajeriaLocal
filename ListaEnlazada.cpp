@@ -1,5 +1,4 @@
 #include "ListaEnlazada.hpp"
-#include "Nodo.hpp"
 #include <iostream>
 #include <cstring>
 using namespace std;
