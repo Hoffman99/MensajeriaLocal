@@ -112,7 +112,7 @@ void aceptarCliente(int socket_servidor, Lista& clientes, TablaHash& tabla) {
         }
     } else {
         cout << "Servidor lleno, rechazando conexión." << endl;
-        scribir_logs("Servidor lleno. Se rechazó una conexión entrante");
+        escribir_logs("Servidor lleno. Se rechazó una conexión entrante");
         close(socket_cliente);
     }
 }
