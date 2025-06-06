@@ -1,5 +1,5 @@
 #include "hashheader.hpp"
-
+#include <iostream>
 // Implementación de métodos de TablaHash
 
 TablaHash::TablaHash() {

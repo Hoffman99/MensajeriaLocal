@@ -1,5 +1,4 @@
 #pragma once 
-#include <iostream>
 #include <string>
 #define CAPACIDAD 10
 using namespace std;
