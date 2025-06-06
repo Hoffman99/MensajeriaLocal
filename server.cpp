@@ -138,7 +138,7 @@ int main() {
     if (socket_servidor < 0) return 1;
 
     cout << "Servidor escuchando en el puerto " << PUERTO << endl;
-
+    escribir_logs("Servidor iniciado en el puerto " + to_string(PUERTO)); //to string nos esta convirtiendo los int a char
     // bucle principal, para escucha y respuesta
     while (true) {
         fd_set lectura_fds;
