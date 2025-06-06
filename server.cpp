@@ -22,6 +22,7 @@ void registrarUsuarios(TablaHash& tabla){
     tabla.Registrar("usuario8", "password");
     tabla.Registrar("usuario9", "letmein");
     tabla.Registrar("usuario10", "iloveyou");
+    escribir_logs("Usuarios registrados en la tabla hash");
 }
 
 // crea y configura el socket del servidor
@@ -30,6 +31,7 @@ int crearSocketServidor(sockaddr_in& direccion){
     int socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_servidor < 0) {
         perror("Error al crear el socket");
+        escribir_logs("Error al crear el socket del servidor");
         return -1;
     }
 
@@ -41,15 +43,17 @@ int crearSocketServidor(sockaddr_in& direccion){
     // se bindea el socket con la dirección
     if (bind(socket_servidor, (sockaddr*)&direccion, sizeof(direccion)) < 0) {
         perror("Error al hacer bind");
+        escribir_logs("Error al hacer bind del socket");
         return -1;
     }
 
     // se pone el socket en modo escucha
     if (listen(socket_servidor, 5) < 0) {
         perror("Error en listen");
+        escribir_logs("Error al poner el socket en modo escucha");
         return -1;
     }
-
+    escribir_logs("Socket servidor creado y escuchando en puerto " + to_string(PUERTO));
     return socket_servidor;
 }
 
@@ -59,6 +63,11 @@ void aceptarCliente(int socket_servidor, Lista& clientes, TablaHash& tabla) {
     socklen_t cliente_len = sizeof(cliente_dir);
     int socket_cliente = accept(socket_servidor, (sockaddr*)&cliente_dir, &cliente_len);
 
+    if (socket_cliente < 0) {
+        escribir_logs("Error al aceptar conexión de cliente");
+        return;
+    }
+    
     if (clientes.ObtenerCantidad() < MAX_CLIENTES) {
         Cliente nuevoCliente;
         nuevoCliente.socket_fd = socket_cliente;
@@ -82,20 +91,28 @@ void aceptarCliente(int socket_servidor, Lista& clientes, TablaHash& tabla) {
                 // **Ahora sí agregamos el cliente a la lista**
                 clientes.insertarAlFinal(nuevoCliente);
                 cout << "Cliente autenticado y conectado en la posición " << clientes.ObtenerCantidad() << endl;
+                string usuario= nuevoCliente.usuario;
+                escribir_logs("Cliente " + usuario + " autenticado correctamente");
+                
             } else if (tabla.iniciarsesion(nuevoCliente.usuario, nuevoCliente.contraseña)==1) {
                 const char* error = "El usuario ya está Online. Conexión cerrada.";
                 send(nuevoCliente.socket_fd, error, strlen(error), 0);
                 close(nuevoCliente.socket_fd);
-                cout << "Cliente rechazado por credenciales incorrectas.\n";
+                cout << "Cliente rechazado por estar ya conectado.\n";
+                string usuario= nuevoCliente.usuario;
+                escribir_logs("Cliente " + usuario + " rechazado: usuario ya online");
             } else {
                 const char* error = "Usuario o contraseña incorrectos. Conexión cerrada.";
                 send(nuevoCliente.socket_fd, error, strlen(error), 0);
                 close(nuevoCliente.socket_fd);
                 cout << "Cliente rechazado por credenciales incorrectas.\n";
+                string usuario= nuevoCliente.usuario;
+                escribir_logs("Intento fallido de conexión con usuario: " + usuario);
             }
         }
     } else {
         cout << "Servidor lleno, rechazando conexión." << endl;
+        scribir_logs("Servidor lleno. Se rechazó una conexión entrante");
         close(socket_cliente);
     }
 }
@@ -115,7 +132,8 @@ void manejarMensajes(Lista& clientes) {
                 ssize_t bytes = recv(actual->dato.socket_fd, actual->dato.mensaje, TAM, 0);
                 if (bytes > 0) {
                     cout << "Cliente " << actual->dato.usuario << " dice: " << actual->dato.mensaje << endl;
-
+                    string user=actual->dato.usuario, mensaje=actual->dato.mensaje;
+                    escribir_logs("Mensaje de " + user + ": " + mensaje);
                     // Broadcast a otros clientes
                     Nodo* broad = clientes.obtenerCabeza();
                     while (broad != nullptr) {
@@ -128,6 +146,8 @@ void manejarMensajes(Lista& clientes) {
                     memset(actual->dato.mensaje, 0, TAM);
                 } else {
                     cout << "Cliente " << actual->dato.usuario << " desconectado.\n";
+                    string usuario=actual->dato.usuario;
+                    escribir_logs("Cliente " + usuario + " desconectado");
                     close(actual->dato.socket_fd);
                     clientes.eliminarNodo(actual->dato);
                 }
@@ -178,6 +198,7 @@ int main() {
 
         if (actividad < 0) {
             perror("Error en select");
+            escribir_logs("Error en select en el bucle principal");
             break;
         }
 
@@ -191,5 +212,6 @@ int main() {
     }
 
     close(socket_servidor);  // se cierra el servidor al terminar
+    escribir_logs("Servidor cerrado");
     return 0;
 }
