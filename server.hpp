@@ -1,5 +1,5 @@
 #pragma once
-
+#include "ListaEnlazada.hpp"
 #include <iostream>
 #include <cstring>
 #include <sys/socket.h>
@@ -13,14 +13,6 @@ using namespace std;
 #define PUERTO 25565
 #define TAM 1024
 #define MAX_CLIENTES 10
-
-struct Cliente {
-    int socket_fd = -1;
-    char mensaje[TAM] = {0};
-    char user[50] = {0};
-    char password[50] = {0};
-    bool autenticado = false;
-};
 
 void registrarUsuarios(TablaHash& tabla);
 

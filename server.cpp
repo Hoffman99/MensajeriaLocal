@@ -43,100 +43,90 @@ int crearSocketServidor(sockaddr_in& direccion){
 }
 
 // aceptar a alguien que intenta conectase
-void aceptarCliente(int socket_servidor, Cliente clientes[], TablaHash& tabla){
+void aceptarCliente(int socket_servidor, Lista& clientes, TablaHash& tabla) {
     sockaddr_in cliente_dir;
     socklen_t cliente_len = sizeof(cliente_dir);
     int socket_cliente = accept(socket_servidor, (sockaddr*)&cliente_dir, &cliente_len);
 
-    if (socket_cliente >= 0) {
-        bool agregado = false;
-        ssize_t bytes;
+    if (clientes.ObtenerCantidad() < MAX_CLIENTES) {
+        Cliente nuevoCliente;
+        nuevoCliente.socket_fd = socket_cliente;
 
-        // buscar un espacio vacío para guardar al cliente
-        for (int i = 0; i < MAX_CLIENTES; i++) {
-            if (clientes[i].socket_fd == -1) {
-                clientes[i].socket_fd = socket_cliente;
-                cout << "Cliente conectado en la posición " << i << endl;
+        if (nuevoCliente.socket_fd >= 0) {
+            // Pedir usuario
+            const char* usu = "Usuario: ";
+            send(nuevoCliente.socket_fd, usu, strlen(usu), 0);
+            recv(nuevoCliente.socket_fd, nuevoCliente.usuario, TAM, 0);
 
-                // se pide el nombre de usuario
-                const char* usu = "Usuario: ";
-                send(clientes[i].socket_fd, usu, strlen(usu), 0);  // se envía el texto
-                bytes = recv(clientes[i].socket_fd, clientes[i].user, TAM, 0);  // se recibe el nombre
+            // Pedir contraseña
+            const char* contr = "Password: ";
+            send(nuevoCliente.socket_fd, contr, strlen(contr), 0);
+            recv(nuevoCliente.socket_fd, nuevoCliente.contraseña, TAM, 0);
 
-                // se pide la contraseña
-                const char* contr = "password ";
-                send(clientes[i].socket_fd, contr, strlen(contr), 0);  // se envía
-                bytes = recv(clientes[i].socket_fd, clientes[i].password, TAM, 0);  // se recibe
+            // Validar credenciales
+            if (tabla.iniciarsesion(nuevoCliente.usuario, nuevoCliente.contraseña)) {
+                const char* bienvenida = "¡Bienvenido al servidor!";
+                send(nuevoCliente.socket_fd, bienvenida, strlen(bienvenida), 0);
 
-                // se revisa si el usuario existe y la contraseña es correcta
-                if (tabla.iniciarsesion(clientes[i].user, clientes[i].password)) {
-                    const char* bienvenida = "¡Bienvenido al servidor!";
-                    send(clientes[i].socket_fd, bienvenida, strlen(bienvenida), 0);  // mensaje de bienvenida
-                    agregado = true;
-                    break;
-                } else {
-                    const char* error = "Usuario o contraseña incorrectos. Conexión cerrada.";
-                    send(clientes[i].socket_fd, error, strlen(error), 0);
-                    close(clientes[i].socket_fd);  // cerrar la conexión si falla el inicio de sesion
-                    clientes[i].socket_fd = -1;
-                    cout << "Cliente " << i << " no autenticado. Conexión cerrada.\n";
-                    agregado = true;
-                    break;
-                }
+                // **Ahora sí agregamos el cliente a la lista**
+                clientes.insertarAlFinal(nuevoCliente);
+                cout << "Cliente autenticado y conectado en la posición " << clientes.ObtenerCantidad() << endl;
+            } else {
+                const char* error = "Usuario o contraseña incorrectos. Conexión cerrada.";
+                send(nuevoCliente.socket_fd, error, strlen(error), 0);
+                close(nuevoCliente.socket_fd);
+                cout << "Cliente rechazado por credenciales incorrectas.\n";
             }
         }
-
-        // no se acepta más si ya esta lleno
-        if (!agregado) {
-            cout << "Demasiados clientes conectados. Cerrando nueva conexión.\n";
-            close(socket_cliente);
-        }
+    } else {
+        cout << "Servidor lleno, rechazando conexión." << endl;
+        close(socket_cliente);
     }
 }
+
 
 // recibir mensajes de cada cliente y reenviarlos a los demás (broadcast)
-void manejarMensajes(Cliente clientes[]){
-    for (int i = 0; i < MAX_CLIENTES; i++) {
-        if (clientes[i].socket_fd != -1) {
-            // se prepara el set de lectura para este cliente
+void manejarMensajes(Lista& clientes) {
+    Nodo* actual = clientes.obtenerCabeza();
+    while (actual != nullptr) {
+        if (actual->dato.socket_fd != -1) {
             fd_set lectura_fds;
             FD_ZERO(&lectura_fds);
-            FD_SET(clientes[i].socket_fd, &lectura_fds);
+            FD_SET(actual->dato.socket_fd, &lectura_fds);
             timeval timeout = {0, 0}; // sin espera
 
-            // revisa si un socket tiene datos disponibles para leer
-            if (select(clientes[i].socket_fd + 1, &lectura_fds, NULL, NULL, &timeout) > 0) {
-                // si hay datos, se reciben
-                ssize_t bytes = recv(clientes[i].socket_fd, clientes[i].mensaje, TAM, 0);
+            if (select(actual->dato.socket_fd + 1, &lectura_fds, NULL, NULL, &timeout) > 0) {
+                ssize_t bytes = recv(actual->dato.socket_fd, actual->dato.mensaje, TAM, 0);
                 if (bytes > 0) {
-                    // mensaje recibido
-                    cout << "Cliente " << i << " dice: " << clientes[i].mensaje << endl;
+                    cout << "Cliente " << actual->dato.usuario << " dice: " << actual->dato.mensaje << endl;
 
-                    // reenviar a todos los demás clientes. este es el broadcast
-                    for (int j = 0; j < MAX_CLIENTES; j++) {
-                        if (clientes[j].socket_fd != clientes[i].socket_fd && clientes[j].socket_fd != -1) {
-                            send(clientes[j].socket_fd, clientes[i].mensaje, strlen(clientes[i].mensaje), 0);
+                    // Broadcast a otros clientes
+                    Nodo* broad = clientes.obtenerCabeza();
+                    while (broad != nullptr) {
+                        if (broad != actual) {
+                            send(broad->dato.socket_fd, actual->dato.mensaje, strlen(actual->dato.mensaje), 0);
                         }
+                        broad = broad->siguiente;
                     }
 
-                    // limpiar el buffer del cliente
-                    memset(clientes[i].mensaje, 0, TAM);
+                    memset(actual->dato.mensaje, 0, TAM);
                 } else {
-                    // si no hay bytes, el cliente se desconectó
-                    cout << "Cliente " << i << " desconectado.\n";
-                    close(clientes[i].socket_fd);
-                    clientes[i].socket_fd = -1;
+                    cout << "Cliente " << actual->dato.usuario << " desconectado.\n";
+                    close(actual->dato.socket_fd);
+                    clientes.eliminarNodo(actual->dato);
                 }
             }
         }
+        actual = actual->siguiente;
     }
 }
+
 
 int main() {
     TablaHash tabla;
     registrarUsuarios(tabla); 
 
-    Cliente clientes[MAX_CLIENTES];  
+    Lista clientes;  
 
     sockaddr_in direccion;
     int socket_servidor = crearSocketServidor(direccion);
@@ -154,12 +144,14 @@ int main() {
         int max_fd = socket_servidor;
 
         // se añaden todos los clientes conectados al conjunto de sockets (el compilado que yo les habia dicho)
-        for (int i = 0; i < MAX_CLIENTES; i++) {
-            if (clientes[i].socket_fd != -1) {
-                FD_SET(clientes[i].socket_fd, &lectura_fds);
-                if (clientes[i].socket_fd > max_fd)
-                    max_fd = clientes[i].socket_fd;
+        Nodo* actual = clientes.obtenerCabeza();
+        while (actual != nullptr) {
+            if (actual->dato.socket_fd != -1) {
+                FD_SET(actual->dato.socket_fd, &lectura_fds);
+                if (actual->dato.socket_fd > max_fd)
+                    max_fd = actual->dato.socket_fd;
             }
+            actual = actual->siguiente;
         }
 
         // timeout de espera (50ms)
