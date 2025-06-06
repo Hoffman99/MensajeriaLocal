@@ -30,6 +30,7 @@ void TablaHash::Registrar(const string& usuario, const string& clave) {
             tabla[indice].clave = clave; 
             tabla[indice].usuario = usuario;
             tabla[indice].estado = OCUPADO;
+            tabla[indice].online = false;
             return;
         }
 
@@ -40,24 +41,26 @@ void TablaHash::Registrar(const string& usuario, const string& clave) {
     cout << "Tabla llena. No se pudo insertar " << clave << endl;
 }
 
-bool TablaHash::iniciarsesion(const string& usuario, const Clave& clave) {
+int TablaHash::iniciarsesion(const string& usuario, const Clave& clave) {
     int indice = funcionHash(clave);
     int intentos = 0;
 
     while (intentos < CAPACIDAD) {
         if (tabla[indice].estado == OCUPADO && tabla[indice].usuario == usuario && tabla[indice].clave == clave) {
-            return true;
+            if(tabla[indice].online==false){
+                tabla[indice].online=true;
+                return 0;
+            }else {
+                return 1;
+            }
         }
 
         if (tabla[indice].estado == VACIO) {
-            return false;
+            return 2;
         }
 
         indice = (indice + 1) % CAPACIDAD;
         intentos++;
     }
-    return false;
+    return 2;
 }
-
-
-

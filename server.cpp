@@ -64,13 +64,18 @@ void aceptarCliente(int socket_servidor, Lista& clientes, TablaHash& tabla) {
             recv(nuevoCliente.socket_fd, nuevoCliente.contraseña, TAM, 0);
 
             // Validar credenciales
-            if (tabla.iniciarsesion(nuevoCliente.usuario, nuevoCliente.contraseña)) {
+            if (tabla.iniciarsesion(nuevoCliente.usuario, nuevoCliente.contraseña)==0) {
                 const char* bienvenida = "¡Bienvenido al servidor!";
                 send(nuevoCliente.socket_fd, bienvenida, strlen(bienvenida), 0);
 
                 // **Ahora sí agregamos el cliente a la lista**
                 clientes.insertarAlFinal(nuevoCliente);
                 cout << "Cliente autenticado y conectado en la posición " << clientes.ObtenerCantidad() << endl;
+            } else if (tabla.iniciarsesion(nuevoCliente.usuario, nuevoCliente.contraseña)==1) {
+                const char* error = "El usuario ya está Online. Conexión cerrada.";
+                send(nuevoCliente.socket_fd, error, strlen(error), 0);
+                close(nuevoCliente.socket_fd);
+                cout << "Cliente rechazado por credenciales incorrectas.\n";
             } else {
                 const char* error = "Usuario o contraseña incorrectos. Conexión cerrada.";
                 send(nuevoCliente.socket_fd, error, strlen(error), 0);
