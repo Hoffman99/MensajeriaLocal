@@ -1,15 +1,22 @@
 #include "server.hpp"
-#include <cstring>
-#include <sys/socket.h>
+#include <cstdio>
 
-void escribir_logs(const string& mensaje) {
+void escribir_logs(const string& mensaje, bool svclose=false) {
     ofstream logs("logs.txt", ios::app);
-    if (logs.is_open()) {
-        time_t hora = time(0);
-        char* fecha = ctime(&hora);
-        if (fecha && fecha[24] == '\n') fecha[24] = '\0';
+    time_t hora = time(0);
+    char* fecha = ctime(&hora);
+    if (fecha && fecha[24] == '\n') fecha[24] = '\0';
+    if (logs.is_open()&&svclose==false) {
         logs << "[" << fecha << "] " << mensaje << endl;
         logs.close();
+    }else {
+        logs.close(); 
+        string nuevo_nombre = string(fecha) + "_logs.txt";
+        if (rename("logs.txt", nuevo_nombre.c_str()) == 0) {
+            cout << "Archivo de logs renombrado a: " << nuevo_nombre << endl;
+        } else {
+            perror("Error al renombrar el archivo de logs");
+        }
     }
 }
 
@@ -219,6 +226,6 @@ int main() {
     }
 
     close(socket_servidor);  // se cierra el servidor al terminar
-    escribir_logs("Servidor cerrado");
+    escribir_logs("Servidor cerrado", true);
     return 0;
 }

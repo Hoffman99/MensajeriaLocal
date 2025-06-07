@@ -8,6 +8,9 @@
 #include <sys/select.h>
 #include "hashheader.hpp"
 #include <fstream>
+#include "server.hpp"
+#include <cstdio>
+
 
 using namespace std;
 
@@ -15,7 +18,7 @@ using namespace std;
 #define TAM 1024
 #define MAX_CLIENTES 10
 
-void escribir_logs(const string& mensaje);
+void escribir_logs(const string& mensaje, bool svclose);
 
 void registrarUsuarios(TablaHash& tabla);
 
