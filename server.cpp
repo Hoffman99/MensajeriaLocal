@@ -191,7 +191,12 @@ int main() {
 
         // se añade el socket del servidor al conjunto de sockets (para nuevas conexiones)
         FD_SET(socket_servidor, &lectura_fds);
-        int max_fd = socket_servidor;
+
+        // agrega la entrada del teclado
+        FD_SET(STDIN_FILENO, &lectura_fds);
+
+        // define el más grande entre socket y teclado
+        int max_fd = socket_servidor > STDIN_FILENO ? socket_servidor : STDIN_FILENO;
 
         // se añaden todos los clientes conectados al conjunto de sockets (el compilado que yo les habia dicho)
         Nodo* actual = clientes.obtenerCabeza();
@@ -216,6 +221,14 @@ int main() {
             break;
         }
 
+        if (FD_ISSET(STDIN_FILENO, &lectura_fds)) {
+            escribir_logs("Servidor cerrado");
+            cin.ignore(); //limpiamos biffer
+            escribir_logs("Servidor cerrado", true);
+            close(socket_servidor);  // se cierra el servidor al terminar
+            return 0;
+        }
+
         // si hay actividad en el socket del servidor, es un nuevo cliente
         if (FD_ISSET(socket_servidor, &lectura_fds)) {
             aceptarCliente(socket_servidor, clientes, tabla);
@@ -225,7 +238,5 @@ int main() {
         manejarMensajes(clientes, tabla);
     }
 
-    close(socket_servidor);  // se cierra el servidor al terminar
-    escribir_logs("Servidor cerrado", true);
     return 0;
 }
