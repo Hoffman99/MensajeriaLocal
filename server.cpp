@@ -21,16 +21,16 @@ void escribir_logs(const string& mensaje, bool svclose=false) {
 }
 
 void registrarUsuarios(TablaHash& tabla){
-    tabla.Registrar("usuario1", "1234");
-    tabla.Registrar("usuario2", "abcd");
-    tabla.Registrar("usuario3", "qwerty");
-    tabla.Registrar("usuario4", "asdfgh");
-    tabla.Registrar("usuario5", "zxcvbn");
-    tabla.Registrar("usuario6", "qazwsx");
-    tabla.Registrar("usuario7", "123456");
-    tabla.Registrar("usuario8", "password");
-    tabla.Registrar("usuario9", "letmein");
-    tabla.Registrar("usuario10", "iloveyou");
+    tabla.Registrar("kiraaab", "odio_documentar");
+    tabla.Registrar("western", "estoy_grabando");
+    tabla.Registrar("hoffman", "ark");
+    tabla.Registrar("fershos", "libido_bajo");
+    tabla.Registrar("keita", "cafe");
+    tabla.Registrar("ebu", "cucu");
+    tabla.Registrar("magic", "tira1d20");
+    tabla.Registrar("ali", "cosauyork");
+    tabla.Registrar("antonio", "ataz");
+    tabla.Registrar("dany", "cigarrito?");
     escribir_logs("Usuarios registrados en la tabla hash");
 }
 
