@@ -23,7 +23,7 @@ void registrarUsuarios(TablaHash& tabla);
 int crearSocketServidor(sockaddr_in& direccion);
 
 // aceptar a alguien que intenta conectase
-void aceptarCliente(int socket_servidor, Cliente clientes[], TablaHash& tabla);
+void aceptarCliente(int socket_servidor, Cliente clientes, TablaHash& tabla);
 
 // recibir mensajes de cada cliente y reenviarlos a los demás (broadcast)
-void manejarMensajes(Cliente clientes[]);
+void manejarMensajes(Cliente clientes, TablaHash& tabla);

@@ -34,5 +34,7 @@ public:
     void Registrar(const string& usuario, const string& clave) ;
     //iniciar sesion
     int iniciarsesion(const string& usuario,const Clave& clave);
+    //Desconectar usuarios al salir
+    void Desconectar(const string& usuario, const Clave& clave);
     
 };

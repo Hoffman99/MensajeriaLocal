@@ -121,7 +121,7 @@ void aceptarCliente(int socket_servidor, Lista& clientes, TablaHash& tabla) {
 
 
 // recibir mensajes de cada cliente y reenviarlos a los demás (broadcast)
-void manejarMensajes(Lista& clientes) {
+void manejarMensajes(Lista& clientes, TablaHash& tabla) {
     Nodo* actual = clientes.obtenerCabeza();
     while (actual != nullptr) {
         if (actual->dato.socket_fd != -1) {
@@ -154,6 +154,7 @@ void manejarMensajes(Lista& clientes) {
                     close(actual->dato.socket_fd);
                     Nodo* tem=actual->siguiente;
                     clientes.eliminarNodo(actual->dato);
+                    tabla.Desconectar(actual->dato.usuario, actual->dato.contraseña);
                     actual = tem;
                     continue; 
                 }
@@ -214,7 +215,7 @@ int main() {
         }
 
         // revisar si algún cliente envió mensaje
-        manejarMensajes(clientes);
+        manejarMensajes(clientes, tabla);
     }
 
     close(socket_servidor);  // se cierra el servidor al terminar

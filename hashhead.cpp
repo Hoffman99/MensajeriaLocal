@@ -64,3 +64,24 @@ int TablaHash::iniciarsesion(const string& usuario, const Clave& clave) {
     }
     return 2;
 }
+
+void TablaHash::Desconectar(const string& usuario, const Clave& clave){
+    int indice = funcionHash(clave);
+    int intentos = 0;
+
+    while (intentos < CAPACIDAD) {
+        if (tabla[indice].estado == OCUPADO && tabla[indice].usuario == usuario && tabla[indice].clave == clave) {
+            if(tabla[indice].online==true){
+                tabla[indice].online=false;
+            }
+
+            if (tabla[indice].estado == VACIO) {
+                return;
+            }
+
+        indice = (indice + 1) % CAPACIDAD;
+        intentos++;
+    }
+    return;
+    }
+}
