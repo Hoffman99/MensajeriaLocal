@@ -1,4 +1,6 @@
 #include "server.hpp"
+#include <cstring>
+#include <sys/socket.h>
 
 void escribir_logs(const string& mensaje) {
     ofstream logs("logs.txt", ios::app);
@@ -133,12 +135,13 @@ void manejarMensajes(Lista& clientes) {
                 if (bytes > 0) {
                     cout << "Cliente " << actual->dato.usuario << " dice: " << actual->dato.mensaje << endl;
                     string user=actual->dato.usuario, mensaje=actual->dato.mensaje;
-                    escribir_logs("Mensaje de " + user + ": " + mensaje);
+                    string mensaje_completo = user + ": " + mensaje;
+                    escribir_logs("Mensaje de " + mensaje_completo);
                     // Broadcast a otros clientes
                     Nodo* broad = clientes.obtenerCabeza();
                     while (broad != nullptr) {
                         if (broad != actual) {
-                            send(broad->dato.socket_fd, actual->dato.mensaje, strlen(actual->dato.mensaje), 0);
+                            send(broad->dato.socket_fd, mensaje_completo.c_str(), mensaje_completo.length(), 0);
                         }
                         broad = broad->siguiente;
                     }
@@ -149,7 +152,10 @@ void manejarMensajes(Lista& clientes) {
                     string usuario=actual->dato.usuario;
                     escribir_logs("Cliente " + usuario + " desconectado");
                     close(actual->dato.socket_fd);
+                    Nodo* tem=actual->siguiente;
                     clientes.eliminarNodo(actual->dato);
+                    actual = tem;
+                    continue; 
                 }
             }
         }

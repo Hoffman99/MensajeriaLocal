@@ -99,7 +99,7 @@ int main() {
             ssize_t bytes = recv(sock, respuesta, TAM - 1, 0);
             if (bytes > 0) {
                 respuesta[bytes] = '\0';
-                cout << "\nMensaje recibido: " << respuesta <<"\n";
+                cout << "Mensaje de "<< respuesta << endl;
             } else if (bytes == 0) {
                 cout << "Servidor desconectado.\n";
                 break;
